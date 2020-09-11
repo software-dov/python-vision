@@ -41,6 +41,7 @@ for version in versions:
 # ----------------------------------------------------------------------------
 templated_files = common.py_library(
    samples=True,
+   microgenerator=True,
    cov_level=99,
    system_test_external_dependencies=["google-cloud-storage"]
 )
