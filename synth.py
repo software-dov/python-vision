@@ -21,6 +21,7 @@ from synthtool.languages import python
 gapic = gcp.GAPICBazel()
 common = gcp.CommonTemplates()
 versions = ["v1", "v1p1beta1", "v1p2beta1", "v1p3beta1", "v1p4beta1"]
+excludes = ["README.rst", "setup.py", "nox*.py", "docs/index.rst"]
 
 
 # ----------------------------------------------------------------------------
@@ -33,62 +34,17 @@ for version in versions:
         bazel_target=f"//google/cloud/vision/{version}:vision-{version}-py",
         include_protos=True
     )
-
-    s.move(library / f"google/cloud/vision_{version}/gapic")
-    s.move(library / f"google/cloud/vision_{version}/__init__.py")
-    s.move(library / f"google/cloud/vision_{version}/types.py")
-    s.move(library / f"google/cloud/vision_{version}/proto")
-    s.move(library / f"tests/unit/gapic/{version}")
-    # don't publish docs for these versions
-    if version not in ["v1p1beta1"]:
-        s.move(library / f"docs/gapic/{version}")
-
-    # Add vision helpers to each version
-    s.replace(
-        f"google/cloud/vision_{version}/__init__.py",
-        f"from __future__ import absolute_import",
-        f"\g<0>\n\n"
-        f"from google.cloud.vision_helpers.decorators import "
-        f"add_single_feature_methods\n"
-        f"from google.cloud.vision_helpers import VisionHelpers",
-    )
-
-    s.replace(
-        f"google/cloud/vision_{version}/__init__.py", f"image_annotator_client", f"iac"
-    )
-
-    s.replace(
-        f"google/cloud/vision_{version}/__init__.py",
-        f"from google.cloud.vision_{version}.gapic import iac",
-        f"from google.cloud.vision_{version}.gapic import "
-        f"image_annotator_client as iac",
-    )
-
-    s.replace(
-        f"google/cloud/vision_{version}/__init__.py",
-        f"class ImageAnnotatorClient\(iac.ImageAnnotatorClient\):",
-        f"@add_single_feature_methods\n"
-        f"class ImageAnnotatorClient(VisionHelpers, iac.ImageAnnotatorClient):",
-    )
-
-# Move docs configuration
-s.move(library / f"docs/conf.py")
-
-# Fix import of operations
-targets = ["google/cloud/vision_*/**/*.py", "tests/system/gapic/*/**/*.py"]
-s.replace(
-    targets,
-    "import google.api_core.operations_v1",
-    "from google.api_core import operations_v1",
-)
+    s.copy(library, excludes=excludes)
 
 # ----------------------------------------------------------------------------
 # Add templated files
 # ----------------------------------------------------------------------------
 templated_files = common.py_library(
-   samples=True, cov_level=99, system_test_external_dependencies=["google-cloud-storage"]
+   samples=True,
+   cov_level=99,
+   system_test_external_dependencies=["google-cloud-storage"]
 )
-s.move(templated_files)
+s.move(templated_files, excludes=[".coveragerc"])  # microgenerator has a good .coveragerc file
 
 # ----------------------------------------------------------------------------
 # Samples templates
