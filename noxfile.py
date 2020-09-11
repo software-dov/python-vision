@@ -75,6 +75,7 @@ def default(session):
 
     # Run py.test against the unit tests.
     session.run(
+        "hoho",
         "py.test",
         "--quiet",
         "--cov=google.cloud.vision",
